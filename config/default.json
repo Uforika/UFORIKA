@@ -5,11 +5,13 @@
   "MIGRATION_DIRECTORY": "./dist/migrations",
   "GAS_PRICE": 10,
   "TOKEN": {
-    "NAME": "FORA",
-    "SYMBOL": "FORA",
-    "AMOUNT": "7000000008"
+    "DEPLOY": true,
+    "PARAMS": {
+      "NAME": "FORA",
+      "SYMBOL": "FORA",
+      "AMOUNT": "7000000008"
+    }
   },
-  "VESTING": {
-
+  "LOCKUP": {
   }
 }
