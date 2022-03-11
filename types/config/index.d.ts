@@ -1,8 +1,11 @@
 declare module "config" {
   export interface Token {
-    readonly NAME: string,
-    readonly SYMBOL: string,
-    readonly AMOUNT: string,
+    readonly DEPLOY: string,
+    PARAMS: {
+      readonly NAME: string,
+      readonly SYMBOL: string,
+      readonly AMOUNT: string,
+    }
   }
 
   export const INFURA_KEY: string;

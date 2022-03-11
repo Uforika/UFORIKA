@@ -5,11 +5,13 @@
   "MIGRATION_DIRECTORY": "MIGRATION_DIRECTORY",
   "GAS_PRICE": "GAS_PRICE",
   "TOKEN": {
-    "NAME": "NAME",
-    "SYMBOL": "SYMBOL",
-    "AMOUNT": "AMOUNT"
+    "DEPLOY": "DEPLOY",
+    "PARAMS": {
+      "NAME": "NAME",
+      "SYMBOL": "SYMBOL",
+      "AMOUNT": "AMOUNT"
+    }
   },
-  "VESTING": {
-
+  "LOCKUP": {
   }
 }
