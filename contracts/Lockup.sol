@@ -15,7 +15,7 @@ contract Lockup is Ownable {
         uint256 monthlyAmount;
         uint256 vesting;
         uint256 cliff;
-        uint256 withdrawAmount;
+        uint256 withdrawnAmount;
         uint256 lockTimestamp;
         uint256 startTimestamp;
         uint256 endTimestamp;
@@ -45,10 +45,14 @@ contract Lockup is Ownable {
     function possibleToWithdraw(uint256 lockId) public view returns (uint256 possibleToWithdrawAmount) {
         require(lockId < locksCount(), "Invalid lock id");
         Lock memory lock_ = _locks[lockId];
-        uint256 closeMonths = (getTimestamp() - lock_.startTimestamp) / MONTH;
-        possibleToWithdrawAmount = closeMonths * lock_.monthlyAmount;
-        possibleToWithdrawAmount -= lock_.withdrawAmount;
-        return possibleToWithdrawAmount;
+        uint256 timestamp = getTimestamp();
+        if (timestamp > lock_.startTimestamp && timestamp < lock_.endTimestamp) {
+            uint256 closeMonths = (getTimestamp() - lock_.startTimestamp) / MONTH;
+            possibleToWithdrawAmount = closeMonths * lock_.monthlyAmount;
+            possibleToWithdrawAmount -= lock_.withdrawnAmount;
+        } else if (timestamp >= lock_.endTimestamp) {
+            possibleToWithdrawAmount = lock_.amount - lock_.withdrawnAmount;
+        }
     }
 
     event Locked(uint256 indexed lockId, uint256 amount, address locker);
@@ -56,8 +60,8 @@ contract Lockup is Ownable {
 
     function lock(address token, uint256 amount, uint256 cliff, uint256 vesting) external onlyOwner returns (bool) {
         require(token != address(0), "Token is zero address");
-        require(amount > 0, "Amount is not positive");
-        require(vesting > 0, "Vesting is not positive");
+        require(amount > 0, "Amount is zero");
+        require(vesting > 0, "Vesting is zero");
         Lock memory lock_;
         lock_.token = IERC20(token);
         lock_.locker = msg.sender;
@@ -70,25 +74,26 @@ contract Lockup is Ownable {
         lock_.endTimestamp = lock_.startTimestamp + lock_.vesting;
         lock_.token.transferFrom(lock_.locker, address(this), amount);
         _locks.push(lock_);
-        emit Locked(locksCount(), amount, lock_.locker);
+        emit Locked(locksCount() - 1, amount, lock_.locker);
         return true;
     }
 
     function withdraw(uint256 lockId, uint256 amount, address recipient) external onlyOwner returns (bool) {
         uint256 possibleToWithdraw_ = possibleToWithdraw(lockId);
+        uint256 withdrawAmount;
         require(recipient != address(0), "Recipient is zero address");
         require(possibleToWithdraw_ > 0, "Possible to withdraw is zero");
-        require(amount > 0, "Amount is not positive");
+        require(amount > 0, "Amount is zero");
         Lock storage lock_ = _locks[lockId];
-        if (getTimestamp() >= lock_.endTimestamp && amount >= possibleToWithdraw_) {
-            lock_.withdrawAmount = possibleToWithdraw_;
+        if (amount > possibleToWithdraw_) {
+            lock_.withdrawnAmount += possibleToWithdraw_;
+            withdrawAmount = possibleToWithdraw_;
+        } else {
+            lock_.withdrawnAmount += amount;
+            withdrawAmount = amount;
         }
-        else {
-            lock_.withdrawAmount = amount;
-        }
-        require(amount <= lock_.withdrawAmount, "Amount is more available");
-        lock_.token.transfer(recipient, lock_.withdrawAmount);
-        emit Withdrawn(lockId, lock_.withdrawAmount, recipient);
+        lock_.token.transfer(recipient, withdrawAmount);
+        emit Withdrawn(lockId, withdrawAmount, recipient);
         return true;
     }
 
