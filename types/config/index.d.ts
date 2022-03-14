@@ -1,11 +1,14 @@
 declare module "config" {
+
+  interface Params {
+    readonly NAME: string,
+    readonly SYMBOL: string,
+    readonly AMOUNT: string,
+  }
+
   export interface Token {
     readonly DEPLOY: string,
-    PARAMS: {
-      readonly NAME: string,
-      readonly SYMBOL: string,
-      readonly AMOUNT: string,
-    }
+    PARAMS: Params
   }
 
   export const INFURA_KEY: string;
