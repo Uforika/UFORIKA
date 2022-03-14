@@ -5,6 +5,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+/**
+ * @title Contract for lockup token
+ * @notice You can use this contract for lockup and withdraw token
+ */
 contract Lockup is Ownable {
     using SafeERC20 for IERC20;
 
@@ -25,10 +29,19 @@ contract Lockup is Ownable {
 
     Lock[] private _locks;
 
+    /**
+    * @notice Returns lockup state
+    * @param lockId Id existing lockup
+    */
     function lock(uint256 lockId) external view returns (Lock memory) {
         return _locks[lockId];
     }
 
+    /**
+    * @notice Returns array lockup states
+    * @param offset Output start lockup
+    * @param limit Count existing lockup
+    */
     function locks(uint256 offset, uint256 limit) external view returns (Lock[] memory locksData) {
         uint256 locksCount_ = locksCount();
         if (offset >= locksCount_) return new Lock[](0);
@@ -38,10 +51,18 @@ contract Lockup is Ownable {
         for (uint256 i = 0; i < locksData.length; i++) locksData[i] = _locks[offset + i];
     }
 
+    /**
+    * @notice Returns count existing lockup
+    * @dev Returns length array lockup state
+    */
     function locksCount() public view returns (uint256) {
         return _locks.length;
     }
 
+    /**
+    * @notice Returns count possible to withdraw token
+    * @param lockId Id existing lockup
+    */
     function possibleToWithdraw(uint256 lockId) public view returns (uint256 possibleToWithdrawAmount) {
         require(lockId < locksCount(), "Invalid lock id");
         Lock memory lock_ = _locks[lockId];
@@ -58,6 +79,21 @@ contract Lockup is Ownable {
     event Locked(uint256 indexed lockId, uint256 amount, address locker);
     event Withdrawn(uint256 indexed lockId, uint256 amount, address recipient);
 
+    /**
+     * @notice Method for lockup token
+     * @param token Address existing token
+     * @param amount Amount token for lockup
+     * @param cliff Delay before starting vesting token period
+     * @param cliff Vesting token period
+     * @return boolean value indicating whether the operation succeeded
+     * Emits a {Locked} event
+     *
+     * Requirements:
+     *
+     * - `token` cannot be the zero
+     * - `amount` cannot be the zero
+     * - `vesting` cannot be the zero
+     */
     function lock(address token, uint256 amount, uint256 cliff, uint256 vesting) external onlyOwner returns (bool) {
         require(token != address(0), "Token is zero address");
         require(amount > 0, "Amount is zero");
@@ -78,6 +114,25 @@ contract Lockup is Ownable {
         return true;
     }
 
+    /**
+     * @notice Method for withdraw unlock token
+     * @param lockId Id existing lockup
+     * @param amount Amount token for withdraw
+     * @param recipient Recipient of the token
+     * @return boolean value indicating whether the operation succeeded
+     * Emits a {Withdrawn} event
+     *
+     * NOTE: doesn't withdraw if lockId non-existent
+     *       or caller isn't owner contract
+     *       or the period has not passed
+     *
+     * Requirements:
+     *
+     * - `recipient` cannot be the zero
+     * - `possibleToWithdraw_` cannot be the zero
+     * - `amount` cannot be the zero
+     * - `amount` cannot be less than or equal to possibleToWithdraw_
+     */
     function withdraw(uint256 lockId, uint256 amount, address recipient) external onlyOwner returns (bool) {
         uint256 possibleToWithdraw_ = possibleToWithdraw(lockId);
         uint256 withdrawAmount;
@@ -97,6 +152,9 @@ contract Lockup is Ownable {
         return true;
     }
 
+    /**
+     * @notice Returns current timestamp
+     */
     function getTimestamp() internal virtual view returns (uint256) {
         return block.timestamp;
     }
