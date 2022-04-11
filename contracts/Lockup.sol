@@ -14,7 +14,6 @@ contract Lockup is Ownable {
 
     struct Lock {
         IERC20 token;
-        address locker;
         uint256 amount;
         uint256 monthlyAmount;
         uint256 vesting;
@@ -25,7 +24,7 @@ contract Lockup is Ownable {
         uint256 endTimestamp;
     }
 
-    uint256 constant MONTH = 30 days;
+    uint256 private constant MONTH = 30 days;
 
     Lock[] private _locks;
 
@@ -68,7 +67,7 @@ contract Lockup is Ownable {
         Lock memory lock_ = _locks[lockId];
         uint256 timestamp = getTimestamp();
         if (timestamp > lock_.startTimestamp && timestamp < lock_.endTimestamp) {
-            uint256 closeMonths = (getTimestamp() - lock_.startTimestamp) / MONTH;
+            uint256 closeMonths = (timestamp - lock_.startTimestamp) / MONTH;
             possibleToWithdrawAmount = closeMonths * lock_.monthlyAmount;
             possibleToWithdrawAmount -= lock_.withdrawnAmount;
         } else if (timestamp >= lock_.endTimestamp) {
@@ -98,9 +97,9 @@ contract Lockup is Ownable {
         require(token != address(0), "Token is zero address");
         require(amount > 0, "Amount is zero");
         require(vesting > 0, "Vesting is zero");
+        address caller = msg.sender;
         Lock memory lock_;
         lock_.token = IERC20(token);
-        lock_.locker = msg.sender;
         lock_.amount = amount;
         lock_.monthlyAmount = amount / vesting;
         lock_.vesting = vesting * MONTH;
@@ -108,9 +107,9 @@ contract Lockup is Ownable {
         lock_.lockTimestamp = getTimestamp();
         lock_.startTimestamp = lock_.lockTimestamp + lock_.cliff;
         lock_.endTimestamp = lock_.startTimestamp + lock_.vesting;
-        lock_.token.transferFrom(lock_.locker, address(this), amount);
+        lock_.token.safeTransferFrom(caller, address(this), amount);
         _locks.push(lock_);
-        emit Locked(locksCount() - 1, amount, lock_.locker);
+        emit Locked(locksCount() - 1, amount, caller);
         return true;
     }
 
@@ -147,7 +146,7 @@ contract Lockup is Ownable {
             lock_.withdrawnAmount += amount;
             withdrawAmount = amount;
         }
-        lock_.token.transfer(recipient, withdrawAmount);
+        lock_.token.safeTransfer(recipient, withdrawAmount);
         emit Withdrawn(lockId, withdrawAmount, recipient);
         return true;
     }

@@ -94,7 +94,6 @@ describe("Method: lock(address token, uint256 amount, uint256 cliff, uint256 ves
       });
       it("should all params equal to expected", async () => {
         assert.strictEqual(lock.token, token.address);
-        assert.strictEqual(lock.locker, account);
         assert.strictEqual(lock.amount, AMOUNT);
         assert.strictEqual(
           lock.monthlyAmount,

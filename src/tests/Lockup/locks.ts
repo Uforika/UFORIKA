@@ -48,7 +48,6 @@ describe("Method: locks(offset: uint256, limit: uint256) returns(Lock[])", () =>
       for (let i = 0; i < locksCount.toNumber(); i++) {
         let lock = await contract.methods["lock(uint256)"](i);
         assert.strictEqual(lock.token, result[i].token);
-        assert.strictEqual(lock.locker, result[i].locker);
         assert.strictEqual(lock.amount, result[i].amount);
         assert.strictEqual(lock.monthlyAmount, result[i].monthlyAmount);
         assert.strictEqual(lock.vesting, result[i].vesting);
@@ -75,7 +74,6 @@ describe("Method: locks(offset: uint256, limit: uint256) returns(Lock[])", () =>
     it("should result contains valid objects", async () => {
       let lock = await contract.methods["lock(uint256)"](1);
       assert.strictEqual(lock.token, result[0].token);
-      assert.strictEqual(lock.locker, result[0].locker);
       assert.strictEqual(lock.amount, result[0].amount);
       assert.strictEqual(lock.monthlyAmount, result[0].monthlyAmount);
       assert.strictEqual(lock.vesting, result[0].vesting);
